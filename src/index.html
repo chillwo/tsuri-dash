@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0d4a57">
+<title>釣り情報ダッシュボード</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 32 32%22%3E%3Crect width=%2232%22 height=%2232%22 rx=%227%22 fill=%22%230d4a57%22/%3E%3Cpath d=%22M3 20c4-6 8-6 13 0s9 6 13 0%22 stroke=%22%231d9aa8%22 stroke-width=%223%22 fill=%22none%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Barlow:wght@500;600&display=swap" rel="stylesheet">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="釣りダッシュ">
+<style>/*CSS*/</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="#f6b21b"/><g stroke="#f6b21b" stroke-width="2" stroke-linecap="round"><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></g></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M7 18.5h10.5a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.2A3.4 3.4 0 0 0 7 18.5z" fill="#9fb3bb"/></symbol>
+    <symbol id="i-partly" viewBox="0 0 24 24"><circle cx="8.5" cy="8.5" r="3.6" fill="#f6b21b"/><g stroke="#f6b21b" stroke-width="1.8" stroke-linecap="round"><path d="M8.5 1.8v1.6M1.8 8.5h1.6M3.8 3.8l1.1 1.1M13.2 3.8l-1.1 1.1"/></g><path d="M9 20h9a3.5 3.5 0 0 0 .3-7 4.8 4.8 0 0 0-9.2 1A3 3 0 0 0 9 20z" fill="#9fb3bb"/></symbol>
+    <symbol id="i-rain" viewBox="0 0 24 24"><path d="M7 14.5h10.5a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.2A3.4 3.4 0 0 0 7 14.5z" fill="#8299a2"/><g stroke="#2f8fd6" stroke-width="2" stroke-linecap="round"><path d="M8 17.5l-1 3M12.5 17.5l-1 3M17 17.5l-1 3"/></g></symbol>
+    <symbol id="i-snow" viewBox="0 0 24 24"><path d="M7 14.5h10.5a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.2A3.4 3.4 0 0 0 7 14.5z" fill="#8299a2"/><g fill="#7fc4ee"><circle cx="8" cy="19" r="1.4"/><circle cx="12.5" cy="20.5" r="1.4"/><circle cx="17" cy="19" r="1.4"/></g></symbol>
+    <symbol id="i-fog" viewBox="0 0 24 24"><g stroke="#9fb3bb" stroke-width="2.2" stroke-linecap="round"><path d="M4 8h16M3 12h18M5 16h14M7 20h10"/></g></symbol>
+    <symbol id="i-thunder" viewBox="0 0 24 24"><path d="M7 13.5h10.5a4 4 0 0 0 .4-8 5.5 5.5 0 0 0-10.6 1.2A3.4 3.4 0 0 0 7 13.5z" fill="#6f8690"/><path d="M12.5 13l-3 5h3l-1.5 4.5 4.5-6h-3l1.5-3.5z" fill="#f6b21b"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M12 2.5l6 9h-4.2V21h-3.6v-9.5H6z" fill="currentColor"/></symbol>
+  </defs>
+</svg>
+
+<header class="top">
+  <div class="top-in">
+    <div class="spotline">
+      <label class="sr" for="spotSel">地点</label>
+      <select id="spotSel" aria-label="地点を選択"></select>
+      <button id="btnSpots" class="ghost" type="button">地点管理</button>
+      <button id="btnRefresh" class="ghost" type="button" aria-label="最新データを取得">更新</button>
+    </div>
+    <h1 id="spotName">釣り情報ダッシュボード</h1>
+    <p class="meta"><span id="fetchedAt">読み込み中…</span></p>
+    <p class="meta src" id="sources"></p>
+    <p class="warn" id="errors" hidden></p>
+  </div>
+</header>
+
+<main>
+  <section class="band" id="sec-now" aria-labelledby="h-now">
+    <h2 id="h-now">現在のコンディション</h2>
+    <div id="now" class="now"></div>
+  </section>
+
+  <section class="band" id="sec-tide" aria-labelledby="h-tide">
+    <h2 id="h-tide">タイドグラフ <small id="tidePort"></small></h2>
+    <p class="next" id="nextTide"></p>
+    <div class="fig" id="tideFig"><svg role="img" aria-label="今日の潮位曲線"></svg></div>
+    <div id="tideList" class="tidelist"></div>
+  </section>
+
+  <section class="band" id="sec-wind" aria-labelledby="h-wind">
+    <h2 id="h-wind">風速予報 <small>今日〜明日</small></h2>
+    <p class="next" id="windNote"></p>
+    <div class="fig short" id="windFig"><svg role="img" aria-label="時間別の平均風速と突風"></svg></div>
+    <p class="legend"><span class="lg-line"></span>平均風速 <span class="lg-dash"></span>突風 <span class="lg-now"></span>現在</p>
+  </section>
+
+  <section class="band" id="sec-hourly" aria-labelledby="h-hourly">
+    <h2 id="h-hourly">時間ごとの予報 <small>今日</small></h2>
+    <div id="hourly"></div>
+  </section>
+
+  <section class="band" id="sec-week" aria-labelledby="h-week">
+    <h2 id="h-week">週間予報 <small>タップで詳細</small></h2>
+    <div id="week" class="week"></div>
+  </section>
+
+  <section class="band" id="sec-reports" aria-labelledby="h-reports">
+    <h2 id="h-reports">釣果情報 <small id="reportsSpot"></small></h2>
+    <p class="hint">地点周辺の最新釣果。各釣果には出典リンクが必須です。
+      探す：<a id="lnkTsurisoku" href="https://tsurisoku.com/" target="_blank" rel="noopener">つりそく</a> ・
+      <a id="lnkSearch" href="#" target="_blank" rel="noopener">Web検索</a></p>
+    <div id="reports" class="cards"></div>
+    <details class="formbox" id="reportFormBox">
+      <summary>釣果情報を追加</summary>
+      <form id="reportForm" class="form" autocomplete="off">
+        <input type="hidden" name="rid">
+        <label>日付<input type="date" name="date" required></label>
+        <label>魚種<input name="fish" required placeholder="例：アジ"></label>
+        <label>サイズ<input name="size" placeholder="例：18〜25cm"></label>
+        <label>尾数<input name="count" placeholder="例：30匹"></label>
+        <label class="wide">場所<input name="place" placeholder="例：坂出港 林田岸壁"></label>
+        <label class="wide">出典URL（必須）<input type="url" name="url" required placeholder="https://tsurisoku.com/..."></label>
+        <label class="wide">メモ<input name="note"></label>
+        <div class="row wide"><button type="submit" class="primary">保存</button><button type="button" class="ghost2" data-cancel>キャンセル</button></div>
+        <p class="formerr" role="alert"></p>
+      </form>
+    </details>
+  </section>
+
+  <section class="band" id="sec-logs" aria-labelledby="h-logs">
+    <h2 id="h-logs">自分の釣果記録</h2>
+    <details class="formbox" id="logFormBox">
+      <summary>釣果を記録する</summary>
+      <form id="logForm" class="form" autocomplete="off">
+        <input type="hidden" name="rid">
+        <label>釣行日<input type="date" name="date" required></label>
+        <label>魚種<input name="fish" required placeholder="例：メバル"></label>
+        <label>サイズ<input name="size" placeholder="例：22cm"></label>
+        <label>尾数<input name="count" placeholder="例：5"></label>
+        <label class="wide">タックル<input name="tackle" placeholder="例：アジングロッド 6ft / 0.3号PE / ジグ単1.2g"></label>
+        <label class="wide">メモ<textarea name="memo" rows="3"></textarea></label>
+        <label class="wide check"><input type="checkbox" name="thisSpot" checked> この地点の記録にする</label>
+        <div class="row wide"><button type="submit" class="primary">保存</button><button type="button" class="ghost2" data-cancel>キャンセル</button></div>
+        <p class="formerr" role="alert"></p>
+      </form>
+    </details>
+    <div id="logs" class="cards"></div>
+  </section>
+
+  <footer class="band foot">
+    <p>天気・風・水温・波・潮流・潮位はすべて数値予報モデルの値で、観測値ではありません。潮位は Open-Meteo の潮位モデル（約8km格子・平均海面基準）で、沿岸では潮汐表と時刻や高さがずれることがあります。月齢・潮名・月の出入りは日付からの近似計算です。航海には使用しないでください。データは「更新」を押したときに取得します（30分以内の再表示は前回の結果を使用）。</p>
+  </footer>
+</main>
+
+<div class="sheet" id="spotSheet" hidden role="dialog" aria-modal="true" aria-labelledby="h-spots">
+  <div class="sheet-in">
+    <div class="sheet-head"><h2 id="h-spots">地点管理</h2><button class="ghost2" type="button" data-close>閉じる</button></div>
+    <h3>登録済みの地点</h3>
+    <div id="spotList"></div>
+    <h3>地名で検索して追加</h3>
+    <form id="geoForm" class="row"><input id="geoQ" placeholder="例：詫間、引田、牛窓" aria-label="地名"><button class="primary" type="submit">検索</button></form>
+    <div id="geoResults"></div>
+    <h3>プリセットから追加</h3>
+    <div id="presets" class="chips"></div>
+    <h3>バックアップ</h3>
+    <p class="hint">地点と釣果記録はこの端末のブラウザ内にだけ保存されます。機種変更やブラウザのデータ削除に備えて、ときどき書き出してください。</p>
+    <div class="row"><button class="ghost2" type="button" id="btnExport">書き出す</button><label class="ghost2 filebtn">読み込む<input type="file" id="fileImport" accept="application/json,.json" hidden></label></div>
+    <p class="formerr" id="spotErr" role="alert"></p>
+  </div>
+</div>
+
+<script>/*JS*/</script>
+</body>
+</html>
