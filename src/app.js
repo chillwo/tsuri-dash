@@ -70,25 +70,37 @@ function drawTide(svg, W, H, t, nowMin, mini = false) {
   const pad = mini ? { l: 2, r: 2, t: 4, b: 4 } : { l: 38, r: 12, t: 26, b: 24 };
   const cms = t.points.map(p => p.cm);
   let lo = Math.min(...cms), hi = Math.max(...cms);
-  const span = Math.max(hi - lo, 20); lo -= span * 0.12; hi += span * 0.15;
+  const span = Math.max(hi - lo, 20); lo -= span * (mini ? 0.12 : 0.22); hi += span * 0.15;
   const x = m => pad.l + (W - pad.l - pad.r) * m / 1440;
   const y = cm => pad.t + (H - pad.t - pad.b) * (1 - (cm - lo) / (hi - lo));
   const line = t.points.map((p, i) => `${i ? 'L' : 'M'}${x(p.m).toFixed(1)},${y(p.cm).toFixed(1)}`).join('');
   const area = `${line}L${x(1440)},${H - pad.b}L${x(0)},${H - pad.b}Z`;
-  let g = `<path d="${area}" fill="var(--tealfill)"/><path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>`;
+  // 満潮・干潮の位置に、潮位点から下端まで白い破線を引く（塗りの上・曲線の下）
+  const exLines = mini ? '' : [...t.highs, ...t.lows].map(e =>
+    `<line class="exline" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
+  let labels = ''; // 満干潮の文字は現在線より手前に描く
+  let g = `<path d="${area}" fill="var(--tealfill)"/>${exLines}<path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>`;
   if (!mini) {
     const step = niceStep(hi - lo, 4);
     for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
       g = `<line x1="${pad.l}" x2="${W - pad.r}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pad.l - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>` + g;
     }
-    const hStep = W < 520 ? 6 : 3;
-    for (let h = 0; h <= 24; h += hStep) g += `<text x="${x(h * 60)}" y="${H - 6}" text-anchor="middle">${h}時</text>`;
+    // 2時間ごとの目盛り（狭い画面では「時」を省いて数字だけ）
+    const narrow = W < 520;
+    let ticks = '';
+    for (let h = 0; h <= 24; h += 2) {
+      const tx = x(h * 60);
+      ticks += `<line x1="${tx}" x2="${tx}" y1="${pad.t}" y2="${H - pad.b}" stroke="var(--line)" stroke-width="${h % 6 ? 0.6 : 1}"/>`;
+      g += `<text x="${tx}" y="${H - 6}" text-anchor="middle">${narrow && h !== 0 ? h : h + '時'}</text>`;
+    }
+    g = ticks + g;
     g += `<text x="${pad.l - 6}" y="14" text-anchor="end">cm</text>`;
     [...t.highs.map(e => ({ ...e, hi: true })), ...t.lows].forEach(e => {
       const ex = x(e.m), ey = y(e.cm);
       const ty = e.hi ? ey - 9 : ey + 17;
       const anchor = ex < 40 ? 'start' : ex > W - 40 ? 'end' : 'middle';
-      g += `<circle cx="${ex}" cy="${ey}" r="3.5" fill="${e.hi ? 'var(--teal)' : 'var(--sub)'}"/><text class="lbl" x="${ex}" y="${ty}" text-anchor="${anchor}">${esc(e.time)} ${e.cm}</text>`;
+      g += `<circle cx="${ex}" cy="${ey}" r="3.5" fill="${e.hi ? 'var(--teal)' : 'var(--sub)'}"/>`;
+      labels += `<text class="lbl" x="${ex}" y="${ty}" text-anchor="${anchor}">${esc(e.time)} ${e.cm}</text>`;
     });
   }
   if (nowMin != null) {
@@ -104,6 +116,7 @@ function drawTide(svg, W, H, t, nowMin, mini = false) {
       g += `<text class="nowlbl" x="${nx + (anchor === 'start' ? 6 : -6)}" y="${pad.t - 10}" text-anchor="${anchor}">現在 ${Math.round(cm)}cm</text>`;
     }
   }
+  g += labels;
   svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
   svg.innerHTML = g;
 }
