@@ -99,6 +99,8 @@ h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
 .fig .lbl{fill:var(--ink);font-size:12px;font-weight:600;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
 .fig .nowlbl{fill:var(--accent);font-weight:600;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
 .fig .exline,.dayrow .exline{stroke:#fff;stroke-width:1.6;stroke-dasharray:4 3;opacity:.95}
+.night{fill:var(--ld8)}
+.night.tw{opacity:.5}
 .exline.mini{stroke-width:1.2;stroke-dasharray:3 2}
 .legend{font-size:12px;color:var(--sub);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0 0}
 .lg-line,.lg-dash,.lg-now{display:inline-block;width:20px;height:0;border-top:2.5px solid var(--teal);margin-left:6px}
@@ -117,7 +119,7 @@ h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
 .hrs{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
 .hr{display:grid;grid-template-columns:3.2em 2.2em 3.4em minmax(0,1fr) 3em 3.4em 3.6em;align-items:center;gap:4px;padding:7px 10px;border-top:1px solid var(--line);font-family:var(--num);font-size:15px;white-space:nowrap}
 .hr:first-child{border-top:0}
-.hr.head{font-family:inherit;font-size:11px;color:var(--sub);background:var(--ld8)}
+.hr.head{font-family:inherit;font-size:11px;color:var(--sub);background:var(--ld9)}
 .hr.cur{background:var(--hi);box-shadow:inset 4px 0 0 var(--accent)}
 .hr svg.wx{width:24px;height:24px}
 .hr .w{display:flex;flex-direction:column;line-height:1.2;white-space:nowrap}
@@ -166,12 +168,12 @@ h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
 .form .wide{grid-column:1/-1}
 .form label.check{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
 .form label.check input{width:20px;height:20px;min-height:0}
-input,textarea,select.in{min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--ld9);padding:8px 10px;width:100%}
+input,textarea,select.in{min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--ld10);padding:8px 10px;width:100%}
 textarea{min-height:80px;resize:vertical}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .row input{flex:1 1 160px}
 .primary{min-height:44px;padding:0 18px;border-radius:10px;border:0;background:var(--sea);color:#fff;font-weight:700}
-:root .primary{background:var(--ld10)}
+:root .primary{background:var(--ld11)}
 .ghost2,.mini{min-height:44px;padding:0 14px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--ink)}
 .mini{min-height:36px;padding:0 10px;font-size:14px}
 .mini.danger{color:#d0402a}
@@ -198,8 +200,8 @@ textarea{min-height:80px;resize:vertical}
 .loading{opacity:.55;transition:opacity .2s}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 
-:root{--ld0:#eef3f2;--ld1:#ffffff;--ld2:#0f2a31;--ld3:#53707a;--ld4:#d8e3e3;--ld5:rgba(29,154,168,.30);--ld6:#fff3d6;--ld7:var(--sea);--ld8:#f5f8f8;--ld9:#fff;--ld10:var(--sea)}
-@media(prefers-color-scheme:dark){:root{--ld0:#0a171b;--ld1:#12252b;--ld2:#e4eef0;--ld3:#93abb2;--ld4:#22383f;--ld5:rgba(29,154,168,.32);--ld6:#3a3216;--ld7:#7fd3dc;--ld8:#0f1f24;--ld9:#0c1c21;--ld10:var(--teal)}}
+:root{--ld0:#eef3f2;--ld1:#ffffff;--ld2:#0f2a31;--ld3:#53707a;--ld4:#d8e3e3;--ld5:rgba(29,154,168,.30);--ld6:#fff3d6;--ld7:var(--sea);--ld8:rgba(13,42,60,.07);--ld9:#f5f8f8;--ld10:#fff;--ld11:var(--sea)}
+@media(prefers-color-scheme:dark){:root{--ld0:#0a171b;--ld1:#12252b;--ld2:#e4eef0;--ld3:#93abb2;--ld4:#22383f;--ld5:rgba(29,154,168,.32);--ld6:#3a3216;--ld7:#7fd3dc;--ld8:rgba(0,0,0,.28);--ld9:#0f1f24;--ld10:#0c1c21;--ld11:var(--teal)}}
 .filebtn{display:inline-flex;align-items:center;cursor:pointer}
 </style>
 </head>
@@ -795,7 +797,7 @@ function niceStep(range, target) {
 }
 
 // 潮位曲線。points:[{m,cm}] 0〜1440分
-function drawTide(svg, W, H, t, nowMin, mini = false) {
+function drawTide(svg, W, H, t, nowMin, mini = false, sun = null) {
   if (!t || !t.points.length) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">潮汐データなし</text>`; return; }
   const pad = mini ? { l: 8, r: 8, t: 4, b: 15 } : { l: 38, r: 12, t: 26, b: 24 };
   const cms = t.points.map(p => p.cm);
@@ -809,7 +811,17 @@ function drawTide(svg, W, H, t, nowMin, mini = false) {
   const exLines = [...t.highs, ...t.lows].map(e =>
     `<line class="exline${mini ? ' mini' : ''}" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
   let labels = ''; // 満干潮の文字は現在線より手前に描く
-  let g = `<path d="${area}" fill="var(--tealfill)"/>${exLines}<path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>`;
+  // 夜（日の出前・日の入り後）の背景をわずかに暗くする
+  let night = '';
+  if (sun && /^\d\d:\d\d$/.test(sun.rise || '') && /^\d\d:\d\d$/.test(sun.set || '')) {
+    const r = x(minOf(sun.rise)), s = x(minOf(sun.set)), top = pad.t, h = H - pad.t - pad.b;
+    const tw = x(30) - x(0); // 薄明の帯（30分）で境目をなじませる
+    night = `<rect class="night" x="${x(0)}" y="${top}" width="${Math.max(0, r - x(0))}" height="${h}"/>` +
+      `<rect class="night tw" x="${r}" y="${top}" width="${tw}" height="${h}"/>` +
+      `<rect class="night tw" x="${s - tw}" y="${top}" width="${tw}" height="${h}"/>` +
+      `<rect class="night" x="${s}" y="${top}" width="${Math.max(0, x(1440) - s)}" height="${h}"/>`;
+  }
+  let g = `${night}<path d="${area}" fill="var(--tealfill)"/>${exLines}<path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>`;
   if (mini) {
     // 週間予報のミニグラフ：2時間ごとの目盛りと時刻（数字のみ）
     let ticks = '';
@@ -955,7 +967,7 @@ function renderTide() {
   const d = state.data, t = d.days[0]?.tide;
   const now = jstNow(), nowMin = minOf(now.slice(11, 16));
   $('#tidePort').textContent = t ? `${t.tideName}・平均海面基準` : '';
-  chart($('#tideFig svg'), (svg, W, H) => drawTide(svg, W, H, t, minOf(jstNow().slice(11, 16))));
+  chart($('#tideFig svg'), (svg, W, H) => drawTide(svg, W, H, t, minOf(jstNow().slice(11, 16)), false, { rise: d.days[0].sunrise, set: d.days[0].sunset }));
   $('#tideList').innerHTML = t ? tideListHtml(t, nowMin) : '';
   // 次の満潮・干潮
   const ext = [];
@@ -1029,9 +1041,9 @@ function renderWeek() {
   d.days.forEach((day, i) => {
     const el = document.querySelector(`.day[data-date="${day.date}"]`);
     const nm = () => (i === 0 ? minOf(jstNow().slice(11, 16)) : null);
-    chart(el.querySelector('.g svg'), (svg, W, H) => drawTide(svg, W, H, day.tide, nm(), true));
+    chart(el.querySelector('.g svg'), (svg, W, H) => drawTide(svg, W, H, day.tide, nm(), true, { rise: day.sunrise, set: day.sunset }));
     if (state.expanded.has(day.date)) {
-      chart(el.querySelector('.dtide'), (svg, W, H) => drawTide(svg, W, H, day.tide, nm()));
+      chart(el.querySelector('.dtide'), (svg, W, H) => drawTide(svg, W, H, day.tide, nm(), false, { rise: day.sunrise, set: day.sunset }));
       chart(el.querySelector('.dwind'), (svg, W, H) => drawWind(svg, W, H, hoursFor(day.date), jstNow()));
     }
   });
