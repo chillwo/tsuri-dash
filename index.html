@@ -98,7 +98,8 @@ h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
 .fig text{font-family:var(--num);font-size:11px;fill:var(--sub)}
 .fig .lbl{fill:var(--ink);font-size:12px;font-weight:600;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
 .fig .nowlbl{fill:var(--accent);font-weight:600;paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
-.fig .exline{stroke:#fff;stroke-width:1.6;stroke-dasharray:4 3;opacity:.95}
+.fig .exline,.dayrow .exline{stroke:#fff;stroke-width:1.6;stroke-dasharray:4 3;opacity:.95}
+.exline.mini{stroke-width:1.2;stroke-dasharray:3 2}
 .legend{font-size:12px;color:var(--sub);display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin:6px 0 0}
 .lg-line,.lg-dash,.lg-now{display:inline-block;width:20px;height:0;border-top:2.5px solid var(--teal);margin-left:6px}
 .lg-dash{border-top:2px dashed var(--accent)}
@@ -129,7 +130,7 @@ h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
 /* week */
 .week{display:flex;flex-direction:column;gap:8px}
 .day{background:var(--card);border:1px solid var(--line);border-radius:14px}
-.dayrow{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:3.6em 32px 1fr minmax(90px,30%);grid-template-areas:"d i m g" "d i t g";gap:2px 10px;padding:10px 12px;align-items:center}
+.dayrow{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:3.6em 32px 1fr;grid-template-areas:"d i m" "d i t" "g g g";gap:2px 10px;padding:10px 12px;align-items:center}
 .dayrow:focus-visible{outline:3px solid var(--accent);border-radius:14px}
 .dayrow .d{grid-area:d;font-weight:700;line-height:1.2}
 .dayrow .d small{display:block;font-weight:400;color:var(--sub);font-size:12px}
@@ -138,14 +139,15 @@ h3{font-size:15px;margin:18px 0 8px;color:var(--sub)}
 .dayrow .m .tmax{color:#e0482b;font-weight:600} .dayrow .m .tmin{color:#2f7fd0;font-weight:600}
 .dayrow .t{grid-area:t;font-size:12px;color:var(--sub);display:flex;flex-wrap:wrap;gap:0 10px}
 .dayrow .t b{color:var(--ink);font-weight:500}
-.dayrow .g{grid-area:g;height:46px;position:relative}
+.dayrow .g{grid-area:g;height:48px;position:relative;margin-top:6px}
 .dayrow .g svg{position:absolute;inset:0;width:100%;height:100%}
 .day.open{border-color:var(--teal);box-shadow:0 0 0 1px var(--teal)}
 .detail{padding:0 12px 14px;display:grid;gap:12px}
 .detail .sum{font-size:14px;display:flex;flex-wrap:wrap;gap:4px 16px;color:var(--sub)}
 .detail .sum b{color:var(--ink);font-family:var(--num);font-weight:600}
 .detail h4{margin:4px 0 0;font-size:14px}
-@media(max-width:520px){.dayrow{grid-template-columns:3.2em 28px 1fr;grid-template-areas:"d i m" "d i t" "g g g"}.dayrow .g{height:40px}}
+@media(max-width:520px){.dayrow{grid-template-columns:3.2em 28px 1fr}.dayrow .g{height:44px}}
+@media(min-width:760px){.dayrow .g{height:60px}}
 
 /* cards & forms */
 .cards{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
@@ -797,14 +799,14 @@ function drawTide(svg, W, H, t, nowMin, mini = false) {
   const pad = mini ? { l: 2, r: 2, t: 4, b: 4 } : { l: 38, r: 12, t: 26, b: 24 };
   const cms = t.points.map(p => p.cm);
   let lo = Math.min(...cms), hi = Math.max(...cms);
-  const span = Math.max(hi - lo, 20); lo -= span * (mini ? 0.12 : 0.22); hi += span * 0.15;
+  const span = Math.max(hi - lo, 20); lo -= span * (mini ? 0.4 : 0.22); hi += span * 0.15;
   const x = m => pad.l + (W - pad.l - pad.r) * m / 1440;
   const y = cm => pad.t + (H - pad.t - pad.b) * (1 - (cm - lo) / (hi - lo));
   const line = t.points.map((p, i) => `${i ? 'L' : 'M'}${x(p.m).toFixed(1)},${y(p.cm).toFixed(1)}`).join('');
   const area = `${line}L${x(1440)},${H - pad.b}L${x(0)},${H - pad.b}Z`;
   // 満潮・干潮の位置に、潮位点から下端まで白い破線を引く（塗りの上・曲線の下）
-  const exLines = mini ? '' : [...t.highs, ...t.lows].map(e =>
-    `<line class="exline" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
+  const exLines = [...t.highs, ...t.lows].map(e =>
+    `<line class="exline${mini ? ' mini' : ''}" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
   let labels = ''; // 満干潮の文字は現在線より手前に描く
   let g = `<path d="${area}" fill="var(--tealfill)"/>${exLines}<path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>`;
   if (!mini) {

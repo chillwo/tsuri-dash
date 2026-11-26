@@ -70,14 +70,14 @@ function drawTide(svg, W, H, t, nowMin, mini = false) {
   const pad = mini ? { l: 2, r: 2, t: 4, b: 4 } : { l: 38, r: 12, t: 26, b: 24 };
   const cms = t.points.map(p => p.cm);
   let lo = Math.min(...cms), hi = Math.max(...cms);
-  const span = Math.max(hi - lo, 20); lo -= span * (mini ? 0.12 : 0.22); hi += span * 0.15;
+  const span = Math.max(hi - lo, 20); lo -= span * (mini ? 0.4 : 0.22); hi += span * 0.15;
   const x = m => pad.l + (W - pad.l - pad.r) * m / 1440;
   const y = cm => pad.t + (H - pad.t - pad.b) * (1 - (cm - lo) / (hi - lo));
   const line = t.points.map((p, i) => `${i ? 'L' : 'M'}${x(p.m).toFixed(1)},${y(p.cm).toFixed(1)}`).join('');
   const area = `${line}L${x(1440)},${H - pad.b}L${x(0)},${H - pad.b}Z`;
   // 満潮・干潮の位置に、潮位点から下端まで白い破線を引く（塗りの上・曲線の下）
-  const exLines = mini ? '' : [...t.highs, ...t.lows].map(e =>
-    `<line class="exline" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
+  const exLines = [...t.highs, ...t.lows].map(e =>
+    `<line class="exline${mini ? ' mini' : ''}" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
   let labels = ''; // 満干潮の文字は現在線より手前に描く
   let g = `<path d="${area}" fill="var(--tealfill)"/>${exLines}<path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>`;
   if (!mini) {
