@@ -489,8 +489,19 @@ saveDb();
 
 async function getJSON(url) {
   // 独自ヘッダーは付けない（CORS の事前確認を避けるため）
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) { const e = new Error(`HTTP ${res.status}`); e.status = res.status; e.url = url; throw e; }
+  const host = (() => { try { return new URL(url).hostname; } catch { return url; } })();
+  let res;
+  try { res = await fetch(url, { cache: 'no-store' }); } catch (err) {
+    const e = new Error(`${host} に接続できません（電波状況・通信制限・コンテンツブロッカーを確認）`); e.status = 0; throw e;
+  }
+  if (!res.ok) {
+    // Open-Meteo はエラー理由を JSON の reason で返す
+    let reason = '';
+    try { const j = await res.json(); reason = j && (j.reason || j.message) || ''; } catch { /* not json */ }
+    const hint = res.status === 429 ? '利用回数の上限。しばらく待って再試行' : res.status >= 500 ? '提供元の障害' : res.status === 400 ? '要求内容の誤り' : '';
+    const e = new Error(`${host} HTTP ${res.status}${hint ? '・' + hint : ''}${reason ? '：' + String(reason).slice(0, 160) : ''}`);
+    e.status = res.status; e.url = url; throw e;
+  }
   return res.json();
 }
 const addD = (ymd, n) => new Date(Date.parse(ymd + 'T00:00:00Z') + n * 864e5).toISOString().slice(0, 10);
