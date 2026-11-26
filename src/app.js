@@ -67,7 +67,7 @@ function niceStep(range, target) {
 // 潮位曲線。points:[{m,cm}] 0〜1440分
 function drawTide(svg, W, H, t, nowMin, mini = false) {
   if (!t || !t.points.length) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">潮汐データなし</text>`; return; }
-  const pad = mini ? { l: 2, r: 2, t: 4, b: 4 } : { l: 38, r: 12, t: 26, b: 24 };
+  const pad = mini ? { l: 8, r: 8, t: 4, b: 15 } : { l: 38, r: 12, t: 26, b: 24 };
   const cms = t.points.map(p => p.cm);
   let lo = Math.min(...cms), hi = Math.max(...cms);
   const span = Math.max(hi - lo, 20); lo -= span * (mini ? 0.4 : 0.22); hi += span * 0.15;
@@ -80,6 +80,16 @@ function drawTide(svg, W, H, t, nowMin, mini = false) {
     `<line class="exline${mini ? ' mini' : ''}" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
   let labels = ''; // 満干潮の文字は現在線より手前に描く
   let g = `<path d="${area}" fill="var(--tealfill)"/>${exLines}<path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>`;
+  if (mini) {
+    // 週間予報のミニグラフ：2時間ごとの目盛りと時刻（数字のみ）
+    let ticks = '';
+    for (let h = 0; h <= 24; h += 2) {
+      const tx = x(h * 60);
+      ticks += `<line x1="${tx}" x2="${tx}" y1="${pad.t}" y2="${H - pad.b}" stroke="var(--line)" stroke-width="${h % 6 ? 0.5 : 0.9}"/>`;
+      g += `<text x="${tx}" y="${H - 3}" text-anchor="middle">${h}</text>`;
+    }
+    g = ticks + g;
+  }
   if (!mini) {
     const step = niceStep(hi - lo, 4);
     for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
