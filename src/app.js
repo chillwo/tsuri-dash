@@ -65,7 +65,6 @@ function niceStep(range, target) {
 }
 
 // 潮位曲線。points:[{m,cm}] 0〜1440分
-let hatchSeq = 0;
 function drawTide(svg, W, H, t, nowMin, mini = false, sun = null) {
   if (!t || !t.points.length) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">潮汐データなし</text>`; return; }
   const pad = mini ? { l: 8, r: 8, t: 4, b: 15 } : { l: 38, r: 12, t: 26, b: 24 };
@@ -80,15 +79,12 @@ function drawTide(svg, W, H, t, nowMin, mini = false, sun = null) {
   const exLines = [...t.highs, ...t.lows].map(e =>
     `<line class="exline${mini ? ' mini' : ''}" x1="${x(e.m)}" x2="${x(e.m)}" y1="${y(e.cm)}" y2="${H - pad.b}"/>`).join('');
   let labels = ''; // 満干潮の文字は現在線より手前に描く
-  // 夜（日の出前・日の入り後）に斜線の網掛けをグラフの上から重ねる
+  // 夜（日の出前・日の入り後）に薄い色をグラフの上から重ねる（斜線なし）
   let night = '';
   if (sun && /^\d\d:\d\d$/.test(sun.rise || '') && /^\d\d:\d\d$/.test(sun.set || '')) {
-    const pid = 'hatch' + (++hatchSeq), gap = mini ? 5 : 7;
     const r = x(minOf(sun.rise)), s = x(minOf(sun.set)), top = pad.t, h = H - pad.t - pad.b;
-    night = `<defs><pattern id="${pid}" width="${gap}" height="${gap}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">` +
-      `<line class="hatch" x1="0" y1="0" x2="0" y2="${gap}"/></pattern></defs>` +
-      `<rect fill="url(#${pid})" x="${x(0)}" y="${top}" width="${Math.max(0, r - x(0))}" height="${h}"/>` +
-      `<rect fill="url(#${pid})" x="${s}" y="${top}" width="${Math.max(0, x(1440) - s)}" height="${h}"/>`;
+    night = `<rect class="night" x="${x(0)}" y="${top}" width="${Math.max(0, r - x(0))}" height="${h}"/>` +
+      `<rect class="night" x="${s}" y="${top}" width="${Math.max(0, x(1440) - s)}" height="${h}"/>`;
   }
   let g = `<path d="${area}" fill="var(--tealfill)"/>${exLines}<path d="${line}" fill="none" stroke="var(--teal)" stroke-width="${mini ? 1.6 : 2.5}"/>${night}`;
   if (mini) {
